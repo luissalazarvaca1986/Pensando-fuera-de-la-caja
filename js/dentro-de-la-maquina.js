@@ -115,9 +115,9 @@
     s += '  ' + conjunto('R  rival (' + quienEsElOtro + ')', suyas) + '\n';
     s += '  ' + conjunto('LIBRES', libres) + '\n\n';
 
-    s += titulo('ARITMÉTICA: 15 − (a + b), sobre MIS parejas');
+    s += titulo('ARITMÉTICA: 15 - (a + b), sobre MIS parejas');
     s += cuentas(mias, libres, K) || '  (aún no tengo dos números)\n';
-    s += '\n' + titulo('ARITMÉTICA: 15 − (a + b), sobre las parejas DEL RIVAL');
+    s += '\n' + titulo('ARITMÉTICA: 15 - (a + b), sobre las parejas DEL RIVAL');
     s += cuentas(suyas, libres, K) || '  (aún no tiene dos números)\n';
 
     s += '\n' + titulo('LAS OCHO RECTAS, QUE NO ESTÁN ESCRITAS EN NINGÚN SITIO');
@@ -183,7 +183,7 @@
     }
 
     s += '\n' + titulo(usaCuadrado
-      ? 'LOCALIZAR EL HUECO — V2: con 15 − (a + b)'
+      ? 'LOCALIZAR EL HUECO — V2: con 15 - (a + b)'
       : 'LOCALIZAR EL HUECO — V1: recorriendo la recta');
     if (usaCuadrado) {
       s += caja(PFC.MU.map(String), 3);
@@ -298,7 +298,7 @@
     const libres = PFC.libres(propias, ajenas);
     let s = titulo('EXPLORACIÓN DEL ÁRBOL — valor de cada jugada');
     s += '  El valor lleva la profundidad dentro: ganar en la jugada k vale\n'
-      + '  10 − k. Así ganar ya es mejor que ganar más tarde.\n\n';
+      + '  10 - k. Así ganar ya es mejor que ganar más tarde.\n\n';
     const valores = PFC.valorDeCadaJugada(propias, ajenas);
     const mejor = Math.max.apply(null, Object.keys(valores).map(c => valores[c]));
     for (const c of libres) {
@@ -387,11 +387,11 @@
 
         for (const [a, b] of PFC.parejas(mias)) {
           const f = K - a - b;
-          if (mCierres.includes(f)) notas.push('  mía:   15 − (' + a + ' + ' + b + ') = ' + f + '  libre  W  gano ahi');
+          if (mCierres.includes(f)) notas.push('  mía:   15 - (' + a + ' + ' + b + ') = ' + f + '  libre  W  gano ahi');
         }
         for (const [a, b] of PFC.parejas(suyas)) {
           const f = K - a - b;
-          if (sCierres.includes(f)) notas.push('  suya:  15 − (' + a + ' + ' + b + ') = ' + f + '  libre  !  bloqueo ahi');
+          if (sCierres.includes(f)) notas.push('  suya:  15 - (' + a + ' + ' + b + ') = ' + f + '  libre  !  bloqueo ahi');
         }
 
       } else if (cual === 3) {
@@ -518,10 +518,10 @@
       const marcas = {};
       for (const c in valores) {
         const v = valores[c];
-        marcas[c] = v > 0 ? '+' + v : v < 0 ? '−' + (-v) : '0';
+        marcas[c] = v > 0 ? '+' + v : v < 0 ? '-' + (-v) : '0';
       }
       bloques.push(bloqueMatriz('valor de cada rama', matrizMarcada(marcas, propias, ajenas), 4,
-        ['+ gano, y antes', 'cuanto más alto', '0 tablas · − pierdo']));
+        ['+ gano, y antes', 'cuanto más alto', '0 tablas · - pierdo']));
       const m3 = {};
       for (const c of elegidas) m3[c] = '*';
       bloques.push(bloqueMatriz('decisión', matrizMarcada(m3, propias, ajenas), 3,

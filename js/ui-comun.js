@@ -141,16 +141,17 @@
       ['algoritmos registrados', PFC.algoritmos.map(a => a.id).join(' '),
         PFC.algoritmos.length > 0]
     ];
-    const enlace = '<a href="' + UI.REPO + '">'
-      + UI.REPO.replace('https://github.com/', 'github.com/') + '</a>';
+    const largo = UI.REPO.replace('https://github.com/', 'github.com/');
+    const corto = UI.REPO.replace('https://github.com/', '');
+    const enlace = texto => '<a href="' + UI.REPO + '">' + texto + '</a>';
 
     if (columnas >= 74) {
       return filas.map(f => '$ ' + (f[0] + ' ').padEnd(34, '.') + ' '
         + marca(f[2]) + ' · ' + f[1]).join('\n')
-        + '\n$ ' + 'repositorio'.padEnd(34, '.') + ' ' + enlace;
+        + '\n$ ' + 'repositorio'.padEnd(34, '.') + ' ' + enlace(largo);
     }
     return filas.map(f => '$ ' + f[0] + '\n    ' + marca(f[2]) + ' · ' + f[1]).join('\n')
-      + '\n$ repositorio\n    ' + enlace;
+      + '\n$ repositorio\n    ' + enlace(corto);
   }
 
   // El banner, en dos tallas. El texto largo no se recorta: se cambia por uno
