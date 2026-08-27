@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jugar · Pensando fuera de la caja</title>
+<meta name="description" content="Seis algoritmos para el tres en raya, jugables en el navegador, con la memoria de la máquina a la vista. Código de acompañamiento del libro «Pensando fuera de la caja».">
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+
+<div class="envoltura">
+
+  <pre class="arte-prueba" id="arte-prueba"></pre>
+  <p class="lema-prueba">No te lo creas: seis algoritmos para el mismo juego, y ninguno de ellos
+  puede perder. Compruébalo tú mismo — y mira, mientras juegas, qué está guardando cada uno.</p>
+
+  <h2>1 · La partida <span class="capitulo">capítulo 6 — construyendo el algoritmo</span></h2>
+
+  <p class="guia">Elige quién juega y pulsa <strong>nueva partida</strong>. Quién empieza no se
+  elige: <strong>se sortea</strong>, porque el encargo del libro era no perder nunca, y eso hay
+  que cumplirlo en los dos papeles.</p>
+
+  <div class="panel-control">
+    <div class="controles">
+      <div class="campo">
+        <label for="jugador-a">contendiente A</label>
+        <select id="jugador-a"></select>
+      </div>
+      <div class="campo">
+        <label for="jugador-b">contendiente B</label>
+        <select id="jugador-b"></select>
+      </div>
+    </div>
+    <div class="fila-botones">
+      <button class="accion primaria" id="nueva">nueva partida (sortea quién empieza)</button>
+      <label class="tenue"><input type="checkbox" id="azar" checked>
+        elegir al azar entre jugadas igual de buenas</label>
+      <label class="tenue"><input type="checkbox" id="numeros" checked>
+        <span id="etiqueta-numeros">ver los números del cuadrado mágico</span></label>
+    </div>
+  </div>
+
+  <div class="zona-juego">
+    <div>
+      <div class="caja-tablero">
+        <pre class="tablero-ascii" id="tablero"></pre>
+        <p class="leyenda-fichas" id="leyenda"></p>
+      </div>
+
+      <p class="ayuda-teclado">
+        <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> mover
+        · <kbd>espacio</kbd> jugar
+        · <span id="ayuda-digitos">1–9 jugar por número mágico</span>
+        · <kbd>n</kbd> nueva partida<br>
+        o con el ratón: el puntero selecciona, el clic juega.
+      </p>
+      <p class="estado-partida" id="estado"></p>
+      <p class="marcador" id="marcador"></p>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h3>por qué esa jugada</h3>
+        <p class="regla-activa" id="regla">—</p>
+        <p class="explicacion" id="explicacion"></p>
+        <p class="candidatas-linea" id="candidatas"></p>
+      </div>
+
+      <div class="panel">
+        <h3>bitácora de la partida</h3>
+        <ul class="bitacora" id="bitacora"></ul>
+      </div>
+    </div>
+  </div>
+
+  <h2>2 · Las matrices de la decisión
+    <span class="capitulo">la regla que se acaba de disparar, vista como matrices</span></h2>
+
+  <p class="guia">La misma decisión de arriba, pero en matrices en lugar de en prosa. Una por cada
+  cosa que el algoritmo mira, y la última con la jugada elegida: se lee de izquierda a derecha.
+  Y no son las mismas para todos — ahí está el asunto del libro.</p>
+
+  <div class="panel">
+    <pre class="volcado matrices" id="matrices"></pre>
+  </div>
+
+  <h2>3 · Dentro de la máquina <span class="capitulo">lo que el algoritmo tiene en memoria</span></h2>
+
+  <p class="guia">Un tablero pintado no dice nada sobre cómo se decide. Esto sí: es la memoria de
+  trabajo del algoritmo a quien le toca mover, recalculada con las mismas funciones que usa él.
+  Cambia de algoritmo arriba y mira cómo cambia lo que hay que guardar.</p>
+
+  <div class="panel">
+    <h3><span id="dentro-quien"></span></h3>
+    <pre class="volcado" id="traza"></pre>
+    <pre class="volcado" id="dentro"></pre>
+  </div>
+
+  <div class="contraste">
+    <div>
+      <h4>Pensamiento tradicional</h4>
+      <p>Una matriz de tres por tres con marcas. Para saber algo de ella hay que recorrerla:
+      mirar filas, columnas y diagonales, comparar ocupantes, contar.</p>
+      <p>Y una lista: cuatro mil quinientos casos, o seiscientos veintisiete si se aprovecha la
+      simetría. La corrección reside en la tabla.</p>
+    </div>
+    <div>
+      <h4>Transformación estructural</h4>
+      <p>Dos conjuntos de números. Para saber algo de ellos hay que sumar. No hay coordenadas,
+      no hay filas ni columnas.</p>
+      <p>Y cuatro reglas. La corrección reside en una propiedad aritmética que puedes comprobar
+      tú: de los 84 tríos de {1..9}, exactamente ocho suman quince, y son las ocho rectas.</p>
+    </div>
+  </div>
+
+  <h2>4 · El código que acaba de decidir <span class="capitulo">sacado con toString(), no copiado</span></h2>
+
+  <p class="guia">Esto no es una transcripción del código: es el texto de las funciones que se
+  están ejecutando en esta pestaña, tal como las devuelve <code>Function.prototype.toString()</code>.
+  Si cambia el algoritmo, cambia lo que ves, porque es lo mismo.</p>
+
+  <div class="pestanas" id="pestanas-codigo"></div>
+  <pre class="codigo" id="codigo"></pre>
+  <p class="pequeno tenue"><span id="codigo-titulo"></span><br><span id="codigo-resumen"></span></p>
+
+  <div class="recuadro pensar">
+    <div class="etiqueta">Detengámonos a pensar · qué mirar en ese código</div>
+    <p>Compara <strong>C</strong> con <strong>V1</strong>. Las dos deciden lo mismo: comprobado en
+    esta misma página, no toman una sola decisión distinta. Pero en V1 está escrita a mano la lista
+    de las ocho rectas, y la clasificación de centro, esquinas y lados. En C no están en ninguna
+    parte, porque las ocho rectas son los ocho tríos que suman quince y la clasificación es la
+    paridad de los números.</p>
+    <p>Y compara las dos con <strong>A</strong>. A funciona, no pierde nunca y no se puede leer:
+    su corrección está repartida entre 4 520 sitios.</p>
+  </div>
+
+  <div class="recuadro comprueba">
+    <div class="etiqueta">Compruébalo · rompe el algoritmo a propósito</div>
+    <p>El capítulo 7.5 propone tres roturas instructivas, y la página
+    <a href="verificacion.html">comprobarlo de verdad</a> las ejecuta sobre el árbol completo del
+    juego: invertir las reglas 1 y 2, devolver la regla 4 al azar puro, y quitar la regla 3. Las
+    derrotas aparecen, y aparecen donde el libro dice.</p>
+  </div>
+
+</div>
+
+<script src="js/nucleo.js"></script>
+<script src="js/juego.js"></script>
+<script src="js/alg-c-magico.js"></script>
+<script src="js/alg-v1-v2-geometrico.js"></script>
+<script src="js/alg-tabla.js"></script>
+<script src="js/alg-minimax.js"></script>
+<script src="js/recorrido.js"></script>
+<script src="js/medidas.js"></script>
+<script src="js/dentro-de-la-maquina.js"></script>
+<script src="js/ui-comun.js"></script>
+<script src="js/ui-jugar.js"></script>
+<script>arrancarJuego();</script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>El recuento y las cifras · Pensando fuera de la caja</title>
+<meta name="description" content="El recuento completo del tres en raya y la comparación de tamaño entre las tres soluciones, calculado en el navegador y cotejado con el libro.">
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+
+<div class="envoltura">
+
+  <h2>El balance <span class="capitulo">capítulos 2, 9 y 14</span></h2>
+
+  <blockquote><p>Nada de esto hay que creérselo. El tres en raya se puede recorrer completo en un
+  ordenador cualquiera, y por eso todas las cifras de este capítulo son reproducibles en unos
+  minutos.</p></blockquote>
+
+  <p class="guia">Esta página es el capítulo 14 ejecutándose. Cada magnitud se calcula recorriendo
+  el juego o aplicando su fórmula, y al lado va la cifra del libro con una marca: <span
+  class="bien">✓</span> si coincide, <span class="aviso-t">≠</span> si no. También cuando no.</p>
+
+  <div class="fila-botones">
+    <button class="accion primaria" id="lanzar">calcular todas las cifras</button>
+    <span class="tenue">tarda unos segundos · nada sale de esta pestaña</span>
+  </div>
+
+  <div id="resultados" class="oculto">
+
+    <h3>1. El universo del tres en raya</h3>
+    <p class="progreso" id="p-universo"></p>
+    <div class="tabla-envoltura"><table id="t-universo"></table></div>
+
+    <div class="recuadro pensar">
+      <div class="etiqueta">Detengámonos a pensar · la pregunta que nadie hace</div>
+      <p>Cuatro mil quinientas veinte situaciones. Para un tablero de nueve casillas.</p>
+      <p>La reacción normal ante esto es buscar una técnica mejor. La que propone el libro es una
+      pregunta: <strong>¿de dónde han salido esos cuatro mil quinientos casos?</strong> No estaban
+      en el juego. El juego tiene nueve casillas y ocho formas de ganar. Aparecieron cuando
+      decidimos describir el juego de una manera determinada. Los pusimos nosotros.</p>
+    </div>
+
+    <h3>2. La ecuación 14.1, término a término</h3>
+    <p class="guia">La suma que impone la alternancia de turnos. Se hace a mano en menos de lo que
+    parece; aquí está hecha.</p>
+    <pre class="volcado" id="terminos"></pre>
+
+    <h3>3. De dónde sale el 627</h3>
+    <p class="guia">Cada uno de los 4 520 casos pertenece a una clase, y la clase tiene tantos
+    miembros como versiones distintas produzcan las ocho transformaciones. Fíjate en que la
+    reducción no es de ocho veces, sino de 7,21: hay tableros que quedan iguales a sí mismos al
+    girarlos, y cada uno forma una clase más pequeña.</p>
+    <div class="tabla-envoltura"><table id="t-orbitas"></table></div>
+    <p class="pequeno tenue">Las dos columnas se comprueban una contra otra:
+    <span id="comprobacion-orbitas"></span></p>
+
+    <h3>4. Tamaño del código</h3>
+    <p class="guia">Entre paréntesis, la cifra del libro. A y B se miden sobre la cadena de
+    condicionales generada aquí mismo; C, V1 y V2 sobre el texto de las funciones que deciden, sin
+    comentarios, tal como las devuelve <code>toString()</code>.</p>
+    <p class="progreso" id="p-tamanos"></p>
+    <div class="tabla-envoltura"><table id="t-tamanos"></table></div>
+    <div class="tabla-envoltura"><table id="t-reduccion"></table></div>
+
+    <div class="recuadro aviso">
+      <div class="etiqueta">Una salvedad honesta, la del propio libro</div>
+      <p>Las líneas y los bytes de A y B dependen del estilo con que se genera la tabla. Otro
+      generador daría otras cifras, aunque del mismo orden: aquí las líneas salen a dos de las del
+      libro y los bytes bastante por debajo, porque la clave de cada caso se escribe de otra manera.</p>
+      <p>La magnitud robusta, la que no depende de cómo se escriba, es el <strong>número de
+      casos</strong> —4 520 y 627 frente a cuatro reglas— y el número de condicionales. Si alguna
+      vez te enseñan una comparación de este tipo sin esta salvedad, desconfía.</p>
+    </div>
+
+    <h3>5. La cadena de condicionales, generada delante de ti</h3>
+    <p class="guia">Doscientos treinta y nueve kilobytes de programa para un juego que cabe en una
+    servilleta. Aquí se genera de verdad; solo se muestra el principio y el final, porque el resto
+    no cabe — y eso <em>es</em> el argumento.</p>
+    <div class="pestanas" id="pestanas-cadena"></div>
+    <pre class="codigo corto" id="cadena"></pre>
+    <p class="progreso" id="p-cadena"></p>
+
+    <h3>6. Coste por jugada, y cuántas posiciones ve cada uno</h3>
+    <p class="progreso" id="p-coste"></p>
+    <div class="tabla-envoltura"><table id="t-coste"></table></div>
+    <p class="pequeno tenue" id="nota-clases"></p>
+
+    <div class="contraste">
+      <div>
+        <h4>Dónde reside la corrección · pensamiento tradicional</h4>
+        <p>En la tabla. El programa es correcto porque los casos están bien.</p>
+        <p>Si te preguntan por qué juega bien, la respuesta honesta es: «porque lo hemos probado».</p>
+      </div>
+      <div>
+        <h4>Dónde reside la corrección · transformación estructural</h4>
+        <p>En una propiedad matemática y cuatro reglas.</p>
+        <p>Si te preguntan por qué juega bien, puedes explicarlo. Y quien te escuche puede
+        comprobarlo — es exactamente lo que hace la página
+        <a href="verificacion.html">comprobarlo de verdad</a>.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <h2>Qué demuestran estas cifras <span class="capitulo">capítulo 14.7</span></h2>
+
+  <div class="recuadro comprueba">
+    <div class="etiqueta">Lo que las mediciones establecen</div>
+    <p><strong>La detección de amenazas se reduce a sumar.</strong> Saber qué líneas están ganables
+    o amenazadas cuesta un puñado de operaciones fijas, frente a recorrer una estructura o consultar
+    una tabla de miles de entradas.</p>
+    <p><strong>Las reglas pasan de miles a cuatro.</strong> No es una reducción de estilo: son 4 520
+    casos frente a cuatro reglas, y 627 frente a cuatro cuando se aplica la mejor optimización
+    conocida del enfoque tradicional.</p>
+    <p><strong>La corrección se vuelve defendible leyendo.</strong> En A y B hay que confiar en la
+    tabla. En C, cuatro reglas y una propiedad demostrable.</p>
+    <p><strong>Una transformación completa rinde; una parcial, no.</strong> V2 mantiene las dos
+    representaciones a la vez y no obtiene nada del cuadrado mágico. V3 lo lleva hasta el final y
+    elimina la geometría entera.</p>
+  </div>
+
+  <div class="recuadro aviso">
+    <div class="etiqueta">Lo que no establecen</div>
+    <p><strong>No demuestran que la transformación resuelva el juego.</strong> Dos de las cuatro
+    reglas —evitar dobles amenazas y la preferencia posicional— son política de juego, no
+    consecuencia del cuadrado mágico. La transformación abarata su comprobación; no las suministra.</p>
+    <p><strong>No demuestran que esto funcione en otros problemas.</strong> Un caso es un caso. El
+    tres en raya tenía una estructura matemática esperando, y no hay razón para suponer que todos
+    los problemas la tengan.</p>
+    <p><strong>No miden lo que costó encontrar la transformación.</strong> Fueron varias horas de
+    una persona. Ese coste no aparece en ninguna tabla y es real: si el problema se resuelve en diez
+    minutos por la vía directa, no compensa.</p>
+    <p><strong>No dicen nada sobre problemas grandes.</strong> Todo lo verificado aquí se apoya en
+    que el tres en raya se puede recorrer completo.</p>
+  </div>
+
+  <div class="recuadro pensar">
+    <div class="etiqueta">Detengámonos a pensar · por qué este apartado existe</div>
+    <p>Un libro que solo enseñara la tabla anterior sería más persuasivo y menos útil. La costumbre
+    de decir qué no demuestra lo que uno acaba de demostrar es parte del método que el libro intenta
+    transmitir.</p>
+  </div>
+
+</div>
+
+<script src="js/nucleo.js"></script>
+<script src="js/juego.js"></script>
+<script src="js/alg-c-magico.js"></script>
+<script src="js/alg-v1-v2-geometrico.js"></script>
+<script src="js/alg-tabla.js"></script>
+<script src="js/alg-minimax.js"></script>
+<script src="js/recorrido.js"></script>
+<script src="js/medidas.js"></script>
+<script src="js/dentro-de-la-maquina.js"></script>
+<script src="js/ui-comun.js"></script>
+<script src="js/ui-recuento.js"></script>
+<script>arrancarRecuento();</script>
+</body>
+</html>

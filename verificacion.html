@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comprobarlo de verdad · Pensando fuera de la caja</title>
+<meta name="description" content="Verificación exhaustiva del árbol completo del tres en raya: cero derrotas, ablación de las cuatro reglas y las tres formulaciones del capítulo 8.">
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+
+<div class="envoltura">
+
+  <h2>1 · La correspondencia, delante de ti <span class="capitulo">proposición 5.2</span></h2>
+
+  <p class="guia">Antes de verificar ningún algoritmo, la propiedad de la que todo depende. No hay
+  que creérsela: los 84 subconjuntos se enumeran al cargar esta página.</p>
+
+  <pre class="volcado" id="proposicion"></pre>
+
+  <div class="recuadro pensar">
+    <div class="etiqueta">Detengámonos a pensar · lo que acaba de pasar</div>
+    <p>No es un truco que funcione «casi siempre». Es una equivalencia exacta: de ochenta y cuatro
+    tríos posibles, exactamente ocho suman quince, y esos ocho son precisamente las ocho maneras de
+    ganar. Ni uno de más, ni uno de menos.</p>
+    <p>Por eso el algoritmo no necesita conocer la geometría del tablero. Para saber si alguien ha
+    ganado no hay que recorrer filas ni diagonales: basta comprobar si tiene tres números que sumen
+    quince.</p>
+  </div>
+
+  <h2>2 · Recorrer el juego entero <span class="capitulo">capítulo 7</span></h2>
+
+  <blockquote><p>Jugar unas partidas no demuestra nada. Cincuenta partidas ganadas demuestran que el
+  algoritmo no falla en esas cincuenta. Nada más.</p></blockquote>
+
+  <p class="guia">Lo que sigue no es un muestreo. Se recorre el árbol <strong>completo</strong>:
+  todas las respuestas posibles del rival, en las dos posiciones de salida, y también todas las
+  alternativas del propio azar — porque si el algoritmo elige al azar entre varias jugadas igual de
+  buenas, «no perder nunca» exige que se cumpla para todas las elecciones, no para la que salió esta
+  vez.</p>
+
+  <div class="fila-botones">
+    <button class="accion primaria" id="lanzar">recorrer el juego entero</button>
+    <span class="tenue">tarda unos segundos · todo se calcula aquí, en tu navegador</span>
+  </div>
+
+  <div id="resultados" class="oculto">
+
+    <div class="cifras">
+      <div class="cifra"><div class="valor" id="c-partidas">—</div>
+        <div class="etiqueta">partidas jugadas, sin repetir ninguna</div></div>
+      <div class="cifra"><div class="valor" id="c-derrotas">—</div>
+        <div class="etiqueta">derrotas, sumando los seis algoritmos</div></div>
+    </div>
+
+    <h3>Los seis algoritmos, sobre el juego completo</h3>
+    <p class="progreso" id="p-todos"></p>
+    <div class="tabla-envoltura"><table id="t-todos"></table></div>
+    <p class="pequeno tenue">A, B y M abren más ramas porque consideran igual de buenas más jugadas:
+    exploran todo lo óptimo. C, V1 y V2 recorren 1 784 partidas, la cifra del libro. Lo que importa
+    es la última columna.</p>
+
+    <h3>¿Hacen falta las cuatro reglas? Ablación</h3>
+    <p class="guia">Quitar una pieza para ver si su ausencia produce fallos. Es como se comprueba
+    que las cuatro reglas no solo bastan: hacen falta.</p>
+    <p class="progreso" id="p-ablacion"></p>
+    <div class="tabla-envoltura"><table id="t-ablacion"></table></div>
+
+    <div class="recuadro aviso">
+      <div class="etiqueta">Una cifra que no coincide, y se dice</div>
+      <p>Tres de las cuatro filas reproducen el libro al dígito. La segunda —reglas 1, 2, 3 con la
+      regla 4 al azar puro— no: aquí salen menos partidas y algunas derrotas más. La diferencia está
+      en cómo se elige el ataque de la regla 3 cuando hay varios válidos, un detalle que el libro no
+      fija por escrito.</p>
+      <p>Se deja a la vista en lugar de ajustarlo hasta que cuadre. El libro dedica el capítulo 14.8
+      a separar lo que las cifras demuestran de lo que no; taparía justo eso.</p>
+    </div>
+
+    <h3>Las tres roturas instructivas</h3>
+    <p class="guia">Capítulo 7.5: se aprende más de los fallos que se provocan que de los que se
+    evitan.</p>
+    <p class="progreso" id="p-roturas"></p>
+    <div class="tabla-envoltura"><table id="t-roturas"></table></div>
+    <p class="pequeno tenue">Fíjate en la fila de la regla 3: las 64 derrotas del libro, y todas
+    cuando el algoritmo responde en segundo lugar. Ninguna empezando.</p>
+    <pre class="volcado" id="partida-perdida"></pre>
+
+    <h3>¿Era necesario el cuadrado mágico? Las tres formulaciones</h3>
+    <p class="guia">Capítulo 8. Ninguna de las tres pierde. La pregunta no se responde opinando: se
+    responde construyendo las tres y comparándolas.</p>
+    <p class="progreso" id="p-formulaciones"></p>
+    <div class="tabla-envoltura"><table id="t-formulaciones"></table></div>
+    <div id="comparaciones"></div>
+
+    <div class="contraste">
+      <div>
+        <h4>La respuesta: sí, se puede quitar</h4>
+        <p>Quien reduce el problema son las fichas 1 y 10, no el cuadrado mágico. La codificación
+        posicional convierte «¿hay dos fichas mías y un hueco en esta recta?» en «¿esta recta
+        vale 2?».</p>
+        <p>El caso contiene dos transformaciones encadenadas, no una.</p>
+      </div>
+      <div>
+        <h4>Y sin embargo, qué se pierde al quitarlo</h4>
+        <p>V1 y V2 conservan toda la geometría: la lista de las ocho rectas escrita a mano, las
+        coordenadas y la clasificación de centro, esquinas y lados.</p>
+        <p>Es en V3 donde el cuadrado mágico rinde, porque allí se lleva hasta el final y la
+        representación original puede descartarse entera. <em>Una transformación parcial no
+        rinde.</em></p>
+      </div>
+    </div>
+
+  </div>
+
+  <h2>3 · Qué se ha demostrado y qué no <span class="capitulo">capítulo 7.4</span></h2>
+
+  <div class="recuadro comprueba">
+    <div class="etiqueta">Lo que se ha demostrado</div>
+    <p>Que no existe ninguna secuencia de jugadas del rival, ni ninguna elección del azar propio,
+    que lleve al algoritmo a perder. La condición del encargo se cumple, y se cumple con certeza,
+    no con alta probabilidad.</p>
+  </div>
+
+  <div class="recuadro aviso">
+    <div class="etiqueta">Lo que no se ha demostrado</div>
+    <p>Que el algoritmo gane siempre que podría: no es lo que se pedía. Un rival que juegue bien
+    forzará tablas.</p>
+    <p>Que las cuatro reglas sean las únicas posibles, ni las mejores. Solo que bastan.</p>
+    <p>Que esto funcione en otros problemas. Un caso es un caso. Todo lo verificado aquí se apoya en
+    que el tres en raya se puede recorrer completo; en cuanto un problema no se puede recorrer, la
+    verificación exhaustiva deja de estar disponible y hay que volver a confiar.</p>
+  </div>
+
+</div>
+
+<script src="js/nucleo.js"></script>
+<script src="js/juego.js"></script>
+<script src="js/alg-c-magico.js"></script>
+<script src="js/alg-v1-v2-geometrico.js"></script>
+<script src="js/alg-tabla.js"></script>
+<script src="js/alg-minimax.js"></script>
+<script src="js/recorrido.js"></script>
+<script src="js/medidas.js"></script>
+<script src="js/dentro-de-la-maquina.js"></script>
+<script src="js/ui-comun.js"></script>
+<script src="js/ui-verificacion.js"></script>
+<script>arrancarVerificacion();</script>
+</body>
+</html>
