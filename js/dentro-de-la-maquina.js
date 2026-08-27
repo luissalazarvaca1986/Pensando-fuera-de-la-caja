@@ -31,15 +31,20 @@
     return ' '.repeat(izq) + t + ' '.repeat(sobra - izq);
   }
 
-  // Una rejilla de tres por tres, en caracteres de caja.
+  // Una rejilla de tres por tres, en ASCII puro: '+', '-' y '|'.
+  //
+  // Nada de caracteres de caja (┌ - │). Muchas fuentes monoespaciadas de móvil
+  // no los tienen, el navegador los sustituye por otra fuente con distinto
+  // ancho y todo el dibujo se descuadra. Estos tres caracteres están en todas
+  // las fuentes que existen.
   function caja(celdas, ancho, sangria) {
     const s = sangria || '  ';
-    const h = '─'.repeat(ancho);
-    let out = s + '┌' + h + '┬' + h + '┬' + h + '┐\n';
+    const raya = s + ('+' + '-'.repeat(ancho)).repeat(3) + '+';
+    let out = raya + '\n';
     for (let f = 0; f < 3; f++) {
-      out += s + '│' + celdas.slice(f * 3, f * 3 + 3)
-        .map(c => centrar(c, ancho)).join('│') + '│\n';
-      out += s + (f < 2 ? '├' + h + '┼' + h + '┼' + h + '┤' : '└' + h + '┴' + h + '┴' + h + '┘') + '\n';
+      out += s + '|' + celdas.slice(f * 3, f * 3 + 3)
+        .map(c => centrar(c, ancho)).join('|') + '|\n';
+      out += raya + '\n';
     }
     return out;
   }
@@ -49,11 +54,45 @@
     return nombre + ' = { ' + (numeros.length ? numeros.join(', ') : '—') + ' }';
   }
 
+  // El ancho del filete se limita para que no obligue a desplazar la pantalla
+  // en un móvil.
+  let anchoFilete = 58;
+  DM.fijarAncho = function (columnas) {
+    anchoFilete = Math.max(24, Math.min(58, (columnas || 88) - 4));
+  };
+
   function titulo(t) {
-    return '── ' + t + ' ' + '─'.repeat(Math.max(0, 58 - t.length)) + '\n';
+    return '-- ' + t + ' ' + '-'.repeat(Math.max(0, anchoFilete - t.length)) + '\n';
   }
 
   function si(v) { return v ? 'SÍ' : 'no'; }
+
+
+  // Ajusta el texto al ancho disponible SIN tocar los dibujos.
+  //
+  // El truco es sencillo: una línea que contiene '|' o '+-' forma parte de una
+  // rejilla y no se puede partir sin destruirla. Cualquier otra es prosa y se
+  // envuelve por palabras, conservando la sangría. Así el mismo volcado se lee
+  // en un portátil de 100 columnas y en un móvil de 40.
+  function ajustarTexto(texto, ancho) {
+    if (!ancho || ancho < 20) return texto;
+    return texto.split('\n').map(function (linea) {
+      if (linea.length <= ancho) return linea;
+      if (linea.indexOf('|') >= 0 || linea.indexOf('+-') >= 0) return linea;
+
+      const sangria = (linea.match(/^\s*/) || [''])[0];
+      const palabras = linea.trim().split(/\s+/);
+      const salida = [];
+      let actual = '';
+      for (const palabra of palabras) {
+        const propuesta = actual ? actual + ' ' + palabra : sangria + palabra;
+        if (actual && propuesta.length > ancho) { salida.push(actual); actual = sangria + palabra; }
+        else actual = propuesta;
+      }
+      if (actual) salida.push(actual);
+      return salida.join('\n');
+    }).join('\n');
+  }
 
   /* ==================================================================
    * C — Cuadrado mágico: dos conjuntos de números y una resta
@@ -100,10 +139,10 @@
       const enRango = falta >= 1 && falta <= 9;
       const libre = libres.includes(falta);
       s += '  ' + String(a).padStart(2) + ' + ' + String(b).padStart(2) + ' = '
-        + String(a + b).padStart(2) + '   →  15 − ' + String(a + b).padStart(2) + ' = '
+        + String(a + b).padStart(2) + '   ->  15 - ' + String(a + b).padStart(2) + ' = '
         + (enRango ? String(falta) : '·') + '   '
         + (!enRango ? '(fuera de rango: no hay recta)'
-          : libre ? '¿libre? SÍ  →  RECTA ABIERTA' : '¿libre? no  →  recta muerta')
+          : libre ? '¿libre? SÍ  ->  RECTA ABIERTA' : '¿libre? no  ->  recta muerta')
         + '\n';
     }
     return s;
@@ -162,9 +201,9 @@
       for (const c of r) (t[c] === G.LIBRE ? libre : a).push(c);
       const c = usaCuadrado ? G.localizarPorResta(t, r) : G.localizarRecorriendo(t, r);
       ejemplos += '  [' + r.join(',') + ']  ' + (usaCuadrado
-        ? '15 − (' + PFC.MU[a[0]] + ' + ' + PFC.MU[a[1]] + ') = ' + PFC.MU[c]
-          + '  → casilla ' + c
-        : 'hueco encontrado al recorrerla  → casilla ' + c) + '\n';
+        ? '15 - (' + PFC.MU[a[0]] + ' + ' + PFC.MU[a[1]] + ') = ' + PFC.MU[c]
+          + '  -> casilla ' + c
+        : 'hueco encontrado al recorrerla  -> casilla ' + c) + '\n';
     }
     s += ejemplos ? '\n' + ejemplos : '\n  (ninguna recta amenazada ahora mismo)\n';
 
@@ -193,18 +232,18 @@
     s += '  respuesta leída   ' + (i >= 0 ? tabla.get(clave).join(', ') : '—') + '\n\n';
 
     s += titulo('CÓMO SE LEE LA CLAVE');
-    s += caja(clave.split('').map(c => c === '.' ? '·' : c), 3);
+    s += caja(clave.split('').map(c => c === '.' ? '.' : c), 3);
     s += '  X soy yo, O es el rival, · es una casilla libre.\n\n';
 
     s += titulo('FRAGMENTO DE LA TABLA, ALREDEDOR DE ESTA ENTRADA');
     const desde = Math.max(0, i - 4), hasta = Math.min(claves.length, i + 5);
-    if (desde > 0) s += '        ⋮\n';
+    if (desde > 0) s += '        ...\n';
     for (let j = desde; j < hasta; j++) {
       const k = claves[j];
-      s += '  ' + String(j + 1).padStart(5) + '  "' + k + '"  →  '
+      s += '  ' + String(j + 1).padStart(5) + '  "' + k + '"  ->  '
         + tabla.get(k).join(',') + (j === i ? '   ← ésta' : '') + '\n';
     }
-    if (hasta < claves.length) s += '        ⋮\n';
+    if (hasta < claves.length) s += '        ...\n';
 
     s += '\n' + titulo('LO QUE ESTA TABLA NO PUEDE DECIRTE');
     s += '  Por qué esta jugada: se busca el caso y se lee. Eso sí.\n'
@@ -245,7 +284,7 @@
     s += '  girada de vuelta    ' + enCanonica.map(j => permutacion[j]).join(', ') + '\n\n';
 
     s += titulo('SIETE VECES MENOS CASOS. Y SIGUE SIENDO UNA LISTA');
-    s += '  La reducción es real: 4 520 → 627. Pero pasar de 4 520 casos a\n'
+    s += '  La reducción es real: 4 520 -> 627. Pero pasar de 4 520 casos a\n'
       + '  627 es una reducción cuantitativa: la lista es más corta.\n'
       + '  Sigues sin poder leerla entera.\n';
     return s;
@@ -264,7 +303,7 @@
     const mejor = Math.max.apply(null, Object.keys(valores).map(c => valores[c]));
     for (const c of libres) {
       const v = valores[c];
-      s += '  casilla ' + c + '  →  ' + (v > 0 ? 'gano' : v < 0 ? 'pierdo' : 'tablas')
+      s += '  casilla ' + c + '  ->  ' + (v > 0 ? 'gano' : v < 0 ? 'pierdo' : 'tablas')
         + '   valor ' + String(v).padStart(3)
         + '   ' + (v === mejor ? '← mejor' : '') + '\n';
     }
@@ -298,7 +337,7 @@
     const celdas = [];
     for (let c = 0; c < 9; c++) {
       celdas.push(marcas[c] !== undefined ? marcas[c]
-        : mias.includes(c) ? 'M' : suyas.includes(c) ? 'r' : '·');
+        : mias.includes(c) ? 'M' : suyas.includes(c) ? 'r' : '.');
     }
     return celdas;
   }
@@ -307,11 +346,11 @@
     return [titulo, ''].concat(rejillaPequena(celdas, ancho || 3), pie || []);
   }
 
-  DM.matrices = function (alg, propias, ajenas, decision) {
+  DM.matrices = function (alg, propias, ajenas, decision, columnas) {
     if (!alg || !decision) return '';
+    const ancho = columnas || 88;
     const elegidas = decision.casillas;
-    let s = '── ' + decision.regla.toUpperCase() + ' '
-      + '─'.repeat(Math.max(0, 58 - decision.regla.length)) + '\n\n';
+    let s = '';   // el filete se pone al final, a la medida de lo pintado
     const bloques = [];
     const notas = [];
 
@@ -337,7 +376,7 @@
 
       if (cual === 1 || cual === 2) {
         const m1 = {};
-        for (const n of mCierres) m1[PFC.MU_INV[n]] = '✓';
+        for (const n of mCierres) m1[PFC.MU_INV[n]] = 'W';
         bloques.push(bloqueMatriz('cierro yo', matrizMarcada(m1, propias, ajenas), 3,
           [mCierres.length ? '{' + mCierres.join(',') + '}' : '—']));
 
@@ -348,11 +387,11 @@
 
         for (const [a, b] of PFC.parejas(mias)) {
           const f = K - a - b;
-          if (mCierres.includes(f)) notas.push('  mía:   15 − (' + a + ' + ' + b + ') = ' + f + '  libre  ✓  cierro');
+          if (mCierres.includes(f)) notas.push('  mía:   15 − (' + a + ' + ' + b + ') = ' + f + '  libre  W  gano ahi');
         }
         for (const [a, b] of PFC.parejas(suyas)) {
           const f = K - a - b;
-          if (sCierres.includes(f)) notas.push('  suya:  15 − (' + a + ' + ' + b + ') = ' + f + '  libre  !  bloqueo');
+          if (sCierres.includes(f)) notas.push('  suya:  15 − (' + a + ' + ' + b + ') = ' + f + '  libre  !  bloqueo ahi');
         }
 
       } else if (cual === 3) {
@@ -362,16 +401,16 @@
         for (const x of libres) {
           const dos = PFC.magico.cierres(suyas.concat(x), PFC.quitar(libres, x));
           if (dos.length >= 2) {
-            peligro[PFC.MU_INV[x]] = '‼';
-            notas.push('  si el rival toma el ' + x + ' →  amenaza {' + dos.join(',')
+            peligro[PFC.MU_INV[x]] = '#';
+            notas.push('  si el rival toma el ' + x + ' ->  amenaza {' + dos.join(',')
               + '}   dos a la vez: solo se puede bloquear una');
           }
         }
         bloques.push(bloqueMatriz('doble amenaza suya',
-          matrizMarcada(peligro, propias, ajenas), 3, ['‼ dos de una']));
+          matrizMarcada(peligro, propias, ajenas), 3, ['# dos de una']));
 
         const ataque = {};
-        for (const c of elegidas) ataque[c] = '→';
+        for (const c of elegidas) ataque[c] = '>';
         bloques.push(bloqueMatriz('mis ataques válidos',
           matrizMarcada(ataque, propias, ajenas), 3,
           ['{' + PFC.aNumeros(elegidas).join(',') + '}']));
@@ -388,12 +427,12 @@
         bloques.push(bloqueMatriz('preferencia', matrizMarcada(pref, propias, ajenas), 3,
           ['C centro (el 5)', 'e esquina (par)', 'l lado (impar)']));
         notas.push('  nada que ganar ni bloquear, y ninguna doble amenaza en camino.');
-        notas.push('  centro → esquinas → lados, que aquí es: el 5, los pares, los impares.');
+        notas.push('  centro -> esquinas -> lados, que aqui es: el 5, los pares, los impares.');
       }
 
       // Siempre: la decisión.
       const m3 = {};
-      for (const c of elegidas) m3[c] = '★';
+      for (const c of elegidas) m3[c] = '*';
       bloques.push(bloqueMatriz('decisión', matrizMarcada(m3, propias, ajenas), 3,
         ['{' + PFC.aNumeros(elegidas).join(',') + '}']));
 
@@ -418,7 +457,7 @@
           if (v === G.AMENAZA_AJENA) n20++;
         }
         conteo.push(t[c] !== G.LIBRE ? (t[c] === G.PROPIA ? 'M' : 'r')
-          : (n2 || n20) ? n2 + '/' + n20 : '·');
+          : (n2 || n20) ? n2 + '/' + n20 : '.');
       }
       bloques.push(bloqueMatriz('rectas 2/20', conteo, 4, ['a 2 / a 20']));
 
@@ -428,17 +467,17 @@
           const t2 = G.tablero(propias, ajenas.concat(x));
           const dos = G.cierres(t2, G.AMENAZA_AJENA, loc);
           if (dos.length >= 2) {
-            peligro[x] = '‼';
-            notas.push('  si el rival toma la casilla ' + x + ' → amenazaría ['
+            peligro[x] = '#';
+            notas.push('  si el rival toma la casilla ' + x + ' -> amenazaria ['
               + dos.join(',') + ']: dos a la vez');
           }
         }
         bloques.push(bloqueMatriz('doble amenaza suya',
-          matrizMarcada(peligro, propias, ajenas), 3, ['‼ dos de una']));
+          matrizMarcada(peligro, propias, ajenas), 3, ['# dos de una']));
       }
 
       const m3 = {};
-      for (const c of elegidas) m3[c] = '★';
+      for (const c of elegidas) m3[c] = '*';
       bloques.push(bloqueMatriz('decisión', matrizMarcada(m3, propias, ajenas), 3,
         ['[' + elegidas.join(',') + ']']));
 
@@ -446,7 +485,7 @@
         const r = PFC.RECTAS[i], v = G.sumaRecta(t, r);
         if (v === G.AMENAZA_PROPIA || v === G.AMENAZA_AJENA) {
           notas.push('  ' + G.NOMBRES_RECTA[i].padEnd(8) + '[' + r.join(',') + '] = '
-            + String(v).padStart(2) + '  → hueco en la casilla ' + loc(t, r)
+            + String(v).padStart(2) + '  -> hueco en la casilla ' + loc(t, r)
             + (v === 2 ? '  (cierro)' : '  (bloqueo)'));
         }
       }
@@ -455,20 +494,20 @@
     } else if (alg.id === 'A' || alg.id === 'B') {
       const clave = PFC.clave(propias, ajenas);
       bloques.push(bloqueMatriz('la clave',
-        clave.split('').map(c => c === '.' ? '·' : c === 'X' ? 'M' : 'r'), 3,
+        clave.split('').map(c => c === '.' ? '.' : c === 'X' ? 'M' : 'r'), 3,
         ['"' + clave + '"']));
 
       if (alg.id === 'B') {
         const can = PFC.tablas.canonicaConSimetria(clave);
         bloques.push(bloqueMatriz('forma canónica',
-          can.clave.split('').map(c => c === '.' ? '·' : c === 'X' ? 'M' : 'r'), 3,
+          can.clave.split('').map(c => c === '.' ? '.' : c === 'X' ? 'M' : 'r'), 3,
           ['"' + can.clave + '"']));
         notas.push('  permutación aplicada: [' + can.permutacion.join(',') + ']');
         notas.push('  la jugada se lee en la canónica y se gira de vuelta.');
       }
 
       const m3 = {};
-      for (const c of elegidas) m3[c] = '★';
+      for (const c of elegidas) m3[c] = '*';
       bloques.push(bloqueMatriz('lo que dice la tabla',
         matrizMarcada(m3, propias, ajenas), 3, ['[' + elegidas.join(',') + ']']));
       notas.push('  no hay aritmética que mirar: hay una fila que leer.');
@@ -484,16 +523,24 @@
       bloques.push(bloqueMatriz('valor de cada rama', matrizMarcada(marcas, propias, ajenas), 4,
         ['+ gano, y antes', 'cuanto más alto', '0 tablas · − pierdo']));
       const m3 = {};
-      for (const c of elegidas) m3[c] = '★';
+      for (const c of elegidas) m3[c] = '*';
       bloques.push(bloqueMatriz('decisión', matrizMarcada(m3, propias, ajenas), 3,
         ['[' + elegidas.join(',') + ']']));
       notas.push('  se ha explorado el árbol hasta el final de la partida.');
     }
 
-    s += enFila(bloques, 3).join('\n') + '\n';
+    const cuerpo = apilar(bloques, ancho, 3);
+    // El filete se dimensiona con lo que de verdad se ha pintado, nunca con el
+    // ancho pedido: así jamás sobresale de las matrices.
+    const anchoReal = Math.min(ancho, Math.max.apply(null,
+      cuerpo.split('\n').map(l => l.length).concat([24])));
+    const rotulo = decision.regla.toUpperCase();
+    const relleno = Math.max(2, anchoReal - rotulo.length - 4);
+    s = '-- ' + rotulo + ' ' + '-'.repeat(relleno) + '\n\n' + cuerpo + '\n';
     if (notas.length) s += '\n' + notas.join('\n') + '\n';
-    s += '\n  M ficha del algoritmo · r ficha del rival · ★ jugada elegida\n';
-    return s;
+    s += '\n  M mi ficha  ·  r ficha del rival  ·  . casilla libre'
+      + '  ·  * jugada elegida\n';
+    return ajustarTexto(s, ancho);
   };
 
   /* ==================================================================
@@ -525,19 +572,41 @@
     return salida;
   }
 
-  // Alinea a la izquierda, sin centrar (para bloques de texto).
-  function bloqueIzquierda(lineas, ancho) {
-    return lineas.map(l => l.padEnd(ancho, ' '));
+  function anchoDe(bloque) {
+    return bloque.reduce((m, l) => Math.max(m, l.length), 0);
+  }
+
+  // Reparte los bloques en filas según el ancho disponible, en caracteres.
+  // En un portátil caben las cuatro matrices en fila; en un móvil caben una o
+  // dos, y las demás bajan. Sin esto, el ASCII se sale de la pantalla.
+  function porGrupos(bloques, disponible, separacion) {
+    const grupos = [];
+    let actual = [], ancho = 0;
+    for (const b of bloques) {
+      const w = anchoDe(b);
+      const extra = actual.length ? separacion + w : w;
+      if (actual.length && ancho + extra > disponible) {
+        grupos.push(actual); actual = [b]; ancho = w;
+      } else {
+        actual.push(b); ancho += extra;
+      }
+    }
+    if (actual.length) grupos.push(actual);
+    return grupos;
+  }
+
+  function apilar(bloques, disponible, separacion) {
+    return porGrupos(bloques, disponible, separacion)
+      .map(g => enFila(g, separacion).join('\n')).join('\n\n');
   }
 
   function rejillaPequena(celdas, ancho) {
-    const h = '─'.repeat(ancho);
-    const out = ['┌' + h + '┬' + h + '┬' + h + '┐'];
+    const raya = ('+' + '-'.repeat(ancho)).repeat(3) + '+';
+    const out = [raya];
     for (let f = 0; f < 3; f++) {
-      out.push('│' + celdas.slice(f * 3, f * 3 + 3).map(c => centrar(c, ancho)).join('│') + '│');
-      if (f < 2) out.push('├' + h + '┼' + h + '┼' + h + '┤');
+      out.push('|' + celdas.slice(f * 3, f * 3 + 3).map(c => centrar(c, ancho)).join('|') + '|');
+      out.push(raya);
     }
-    out.push('└' + h + '┴' + h + '┴' + h + '┘');
     return out;
   }
 
@@ -581,7 +650,7 @@
         ? PFC.tablas.canonicaConSimetria(clave).clave : clave;
       const claves = Array.from(tabla.keys());
       const i = claves.indexOf(buscada);
-      const celdas = clave.split('').map(c => c === '.' ? '·' : c === 'X' ? 'M' : 'r');
+      const celdas = clave.split('').map(c => c === '.' ? '.' : c === 'X' ? 'M' : 'r');
       return [cab, ''].concat(rejillaPequena(celdas, 3), [
         i >= 0 ? 'nº ' + (i + 1) : 'terminada',
         'de ' + tabla.size
@@ -591,7 +660,7 @@
     // Minimax
     const celdas = [];
     for (let c = 0; c < 9; c++) {
-      celdas.push(mias.includes(c) ? 'M' : suyas.includes(c) ? 'r' : '·');
+      celdas.push(mias.includes(c) ? 'M' : suyas.includes(c) ? 'r' : '.');
     }
     let v = '—';
     if (!PFC.haGanado(mias) && !PFC.haGanado(suyas) && mias.length + suyas.length < 9) {
@@ -601,7 +670,7 @@
     return [cab, ''].concat(rejillaPequena(celdas, 3), ['valor ' + v]);
   }
 
-  DM.traza = function (alg, historial, suMarca) {
+  DM.traza = function (alg, historial, suMarca, columnas) {
     if (!alg || !historial || !historial.length) {
       return 'La traza aparece en cuanto empiece la partida.';
     }
@@ -620,18 +689,20 @@
       s += '  El valor de la posición para quien mueve, según el árbol.\n\n';
     }
 
-    // En grupos, para que quepan a lo ancho.
-    const porFila = (alg.id === 'V1') ? 4 : 5;
+    // En grupos, según lo que quepa de ancho de verdad.
     const bloques = historial.map((paso, i) => instantanea(alg, paso, i, suMarca));
-    for (let i = 0; i < bloques.length; i += porFila) {
-      s += enFila(bloques.slice(i, i + porFila), 3).join('\n') + '\n\n';
-    }
-    return s.replace(/\n+$/, '\n');
+    s += apilar(bloques, columnas || 88, 3) + '\n';
+    return ajustarTexto(s.replace(/\n+$/, '\n'), columnas || 88);
   };
 
   /* ================================================================== */
 
-  DM.pintar = function (alg, propias, ajenas, quienSoy, quienEsElOtro) {
+  DM.pintar = function (alg, propias, ajenas, quienSoy, quienEsElOtro, columnas) {
+    return ajustarTexto(pintarBruto(alg, propias, ajenas, quienSoy, quienEsElOtro),
+      columnas || 88);
+  };
+
+  function pintarBruto(alg, propias, ajenas, quienSoy, quienEsElOtro) {
     try {
       switch (alg.id) {
         case 'C':  return dentroDeC(propias, ajenas, quienSoy, quienEsElOtro);
@@ -645,6 +716,6 @@
       return 'No se puede mirar dentro ahora mismo: ' + e.message;
     }
     return '';
-  };
+  }
 
 })(typeof globalThis !== 'undefined' ? globalThis : this);

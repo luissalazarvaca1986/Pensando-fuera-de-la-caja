@@ -181,6 +181,30 @@ js/ui-recuento.js            la página 3
 Todos los archivos son JavaScript clásico —sin módulos, sin `import`— a propósito: así la página
 funciona igual servida por GitHub Pages y abierta directamente desde el disco con doble clic.
 
+### Por qué todo el dibujo es ASCII puro
+
+Los tableros, las matrices y los marcos se dibujan con `+`, `-` y `|`, y el título con `#`. No con
+los caracteres de caja de Unicode (`┌ ─ │ █`), que es lo que uno usaría por estética.
+
+La razón es concreta y se descubrió probándolo en un móvil: **muchas fuentes monoespaciadas de
+teléfono no tienen esos caracteres**. El navegador los sustituye por otra fuente con distinto ancho
+de avance, y todo el dibujo se parte — el tablero deja de ser una rejilla. `+`, `-`, `|` y `#`
+están en todas las fuentes que existen, y por eso el dibujo se sostiene en cualquier pantalla.
+
+### Cómo se adapta al ancho
+
+Nada del dibujo tiene un tamaño escrito a mano. Se **mide** el ancho disponible en caracteres
+—descontando el relleno— y a partir de ahí:
+
+- el tablero y el título ajustan su tamaño de letra para ocupar el ancho exacto;
+- las matrices y la traza se reparten en filas: cuatro en un portátil, dos o una en un móvil;
+- la prosa de los volcados se envuelve por palabras, **sin tocar las rejillas** (una línea que
+  contiene `|` o `+-` es parte de un dibujo y no se parte nunca);
+- el banner y el registro de arranque cambian a una versión corta en lugar de recortarse, porque
+  recortar es perder texto.
+
+En un teléfono se juega **tocando la casilla**, y las casillas se dimensionan para el dedo.
+
 El contrato que hace intercambiables los seis algoritmos es una sola función:
 
 ```js

@@ -27,28 +27,57 @@
 
   // Un marco de caja con las líneas alineadas al mismo ancho, calculado y
   // no escrito a mano: así nunca se desalinea.
+  // Marco en ASCII puro: '+', '-' y '|'. Nada de caracteres de caja, por la
+  // misma razón que el tablero: en un móvil se sustituyen y se descuadra.
   UI.marco = function (lineas, ancho) {
-    const w = ancho || lineas.reduce((m, l) => Math.max(m, l.length), 0) + 2;
-    const h = '─'.repeat(w + 2);
-    const out = ['┌' + h + '┐'];
-    for (const l of lineas) out.push('│ ' + UI.rellenar(l, w) + ' │');
-    out.push('└' + h + '┘');
+    // El ancho pedido es un mínimo, no un máximo: si una línea es más larga,
+    // manda ella. Si no, el borde derecho se desalinearía en esa fila.
+    const masLarga = lineas.reduce((m, l) => Math.max(m, l.length), 0);
+    const w = Math.max(ancho || 0, masLarga);
+    const h = '-'.repeat(w + 2);
+    const out = ['+' + h + '+'];
+    for (const l of lineas) out.push('| ' + UI.rellenar(l, w) + ' |');
+    out.push('+' + h + '+');
     return out.join('\n');
   };
 
-  // Título en arte ASCII. Se guarda literal: no depende de ninguna tipografía.
+  // Título en arte ASCII, dibujado con '#'. Nada de U+2588 (█): muchas
+  // fuentes monoespaciadas de móvil no lo tienen, el navegador lo sustituye
+  // por otra fuente con distinto ancho y las letras salen partidas.
   UI.ARTE_PRUEBA = [
-    '████ ████ █  █ █    ████      ████      ████ ████ █  █ ████ ███  ████',
-    '█  █ █  █ ██ █ █    █  █      █  █      █  █ █  █ █  █ █    █  █ █  █',
-    '████ █  █ █ ██ █    █  █      ████      ████ ████ █  █ ███  ███  ████',
-    '█    █  █ █  █ █    █  █      █  █      █    █ █  █  █ █    █  █ █  █',
-    '█    ████ █  █ ████ ████      █  █      █    █  █ ████ ████ ███  █  █',
+    '#### #### #  # #    ####      ####      #### #### #  # #### ###  ####',
+    '#  # #  # ## # #    #  #      #  #      #  # #  # #  # #    #  # #  #',
+    '#### #  # # ## #    #  #      ####      #### #### #  # ###  ###  ####',
+    '#    #  # #  # #    #  #      #  #      #    # #  #  # #    #  # #  #',
+    '#    #### #  # #### ####      #  #      #    #  # #### #### ###  #  #',
     '',
-    '████ █  █      █  █  ██  ████ █  █ ████',
-    ' ██  █  █      ████  ██  █    ████ █  █',
-    ' ██  █  █      ████  ██  ████ ████ █  █',
-    ' ██  █  █      █  █  ██     █ █  █ █  █',
-    ' ██  ████      █  █  ██  ████ █  █ ████',
+    '#### #  #      #  #  ##  #### #  # ####',
+    ' ##  #  #      ####  ##  #    #### #  #',
+    ' ##  #  #      ####  ##  #### #### #  #',
+    ' ##  #  #      #  #  ##     # #  # #  #',
+    ' ##  ####      #  #  ##  #### #  # ####',
+  ].join('\n');
+
+  // Variante de tres renglones para pantallas estrechas: menos ancha, y por
+  // tanto sale al triple de tamaño en un móvil.
+  UI.ARTE_PRUEBA_ESTRECHO = [
+    '#### #### #  # #    ####',
+    '#  # #  # ## # #    #  #',
+    '#### #  # # ## #    #  #',
+    '#    #  # #  # #    #  #',
+    '#    #### #  # #### ####',
+    '',
+    '####      #### #### #  # #### ###  ####',
+    '#  #      #  # #  # #  # #    #  # #  #',
+    '####      #### #### #  # ###  ###  ####',
+    '#  #      #    # #  #  # #    #  # #  #',
+    '#  #      #    #  # #### #### ###  #  #',
+    '',
+    '#### #  #      #  #  ##  #### #  # ####',
+    ' ##  #  #      ####  ##  #    #### #  #',
+    ' ##  #  #      ####  ##  #### #### #  #',
+    ' ##  #  #      #  #  ##     # #  # #  #',
+    ' ##  ####      #  #  ##  #### #  # ####',
   ].join('\n');
 
   /* ---------- Resaltado de código, minúsculo y suficiente ---------- */
@@ -89,50 +118,93 @@
 
   // El registro de arranque no es decorativo: cada línea es una comprobación
   // que se ejecuta de verdad al abrir la página.
-  function registroDeArranque() {
+  //
+  // Viene en dos formatos. Con sitio, con puntos que alinean los resultados en
+  // columna, como un arranque de verdad. Sin sitio —un móvil— en dos renglones
+  // por comprobación: una línea de ochenta caracteres allí no se lee, se sale
+  // de la pantalla y se pierde.
+  function registroDeArranque(columnas) {
     const p52 = PFC.comprobarProposicion52();
     const e56 = PFC.comprobarEcuacion56();
-    const lineas = [];
-    const linea = (que, valor, ok) =>
-      '$ ' + (que + ' ').padEnd(34, '.') + ' '
-      + (ok ? '<span class="ok">ok</span> · ' : '<span class="mal">FALLA</span> · ')
-      + valor;
+    const marca = ok => ok ? '<span class="ok">ok</span>'
+      : '<span class="mal">FALLA</span>';
 
-    lineas.push(linea('constante mágica K3',
-      'n(n²+1)/2 = ' + PFC.constanteMagica(3), PFC.constanteMagica(3) === 15));
-    lineas.push(linea('proposición 5.2',
-      p52.triosQueSumanQuince + ' de ' + p52.subconjuntosDeTres
-      + ' tríos suman 15 y son las ' + p52.rectasDelTablero + ' rectas', p52.coinciden));
-    lineas.push(linea('ecuación 5.6',
-      'centro=5 · esquinas=pares · lados=impares', e56.centro && e56.esquinas && e56.lados));
-    lineas.push(linea('simetrías del tablero (D4)',
-      PFC.SIMETRIAS.length + ' transformaciones', PFC.SIMETRIAS.length === 8));
-    lineas.push(linea('algoritmos registrados',
-      PFC.algoritmos.map(a => a.id).join(' '), PFC.algoritmos.length > 0));
-    return lineas.join('\n');
+    const filas = [
+      ['constante mágica K3', 'n(n²+1)/2 = ' + PFC.constanteMagica(3),
+        PFC.constanteMagica(3) === 15],
+      ['proposición 5.2', p52.triosQueSumanQuince + ' de ' + p52.subconjuntosDeTres
+        + ' tríos suman 15 y son las ' + p52.rectasDelTablero + ' rectas', p52.coinciden],
+      ['ecuación 5.6', 'centro=5 · esquinas=pares · lados=impares',
+        e56.centro && e56.esquinas && e56.lados],
+      ['simetrías del tablero (D4)', PFC.SIMETRIAS.length + ' transformaciones',
+        PFC.SIMETRIAS.length === 8],
+      ['algoritmos registrados', PFC.algoritmos.map(a => a.id).join(' '),
+        PFC.algoritmos.length > 0]
+    ];
+    const enlace = '<a href="' + UI.REPO + '">'
+      + UI.REPO.replace('https://github.com/', 'github.com/') + '</a>';
+
+    if (columnas >= 74) {
+      return filas.map(f => '$ ' + (f[0] + ' ').padEnd(34, '.') + ' '
+        + marca(f[2]) + ' · ' + f[1]).join('\n')
+        + '\n$ ' + 'repositorio'.padEnd(34, '.') + ' ' + enlace;
+    }
+    return filas.map(f => '$ ' + f[0] + '\n    ' + marca(f[2]) + ' · ' + f[1]).join('\n')
+      + '\n$ repositorio\n    ' + enlace;
   }
 
-  UI.cabecera = function (paginaActiva) {
-    const banner = UI.marco([
-      'P E N S A N D O   F U E R A   D E   L A   C A J A',
+  // El banner, en dos tallas. El texto largo no se recorta: se cambia por uno
+  // más corto, que es distinto de perderlo.
+  function bannerTexto(columnas) {
+    if (columnas >= 66) {
+      return UI.marco([
+        'P E N S A N D O   F U E R A   D E   L A   C A J A',
+        '',
+        'Cambiar la forma de representar para cambiar la de resolver.',
+        'Tres en raya · seis algoritmos · el juego recorrido entero.',
+        '',
+        'Luis Alfonso Salazar Vaca — código de acompañamiento del libro'
+      ], 60);
+    }
+    return UI.marco([
+      'PENSANDO FUERA DE LA CAJA',
       '',
-      'Cambiar la forma de representar para cambiar la de resolver.',
-      'Tres en raya · seis algoritmos · el juego recorrido entero.',
+      'Cambiar la forma de',
+      'representar para cambiar',
+      'la de resolver.',
       '',
-      'Luis Alfonso Salazar Vaca — código de acompañamiento del libro',
-    ], 62);
+      'Tres en raya.',
+      'Seis algoritmos.',
+      'El juego recorrido entero.',
+      '',
+      'Luis Alfonso Salazar Vaca',
+      'código de acompañamiento'
+    ], Math.max(26, Math.min(30, columnas - 4)));
+  }
 
+  // Se llama al montar y en cada cambio de tamaño: el ancho se mide, no se
+  // adivina.
+  UI.ajustarCabecera = function () {
+    const banner = document.getElementById('banner');
+    const arranque = document.getElementById('arranque');
+    if (banner) banner.textContent = bannerTexto(UI.columnasQueCaben(banner));
+    if (arranque) {
+      const cols = UI.columnasQueCaben(arranque);
+      arranque.classList.toggle('compacto', cols < 74);
+      arranque.innerHTML = registroDeArranque(cols);
+    }
+  };
+
+  UI.cabecera = function (paginaActiva) {
     const paginas = [
       { archivo: 'index.html', texto: '1 jugar' },
       { archivo: 'verificacion.html', texto: '2 comprobarlo de verdad' },
       { archivo: 'recuento.html', texto: '3 el recuento y las cifras' }
     ];
-
+    // Los dos <pre> se rellenan en UI.ajustarCabecera, que mide el ancho.
     return '<header class="principal"><div class="envoltura">'
-      + '<pre class="banner">' + UI.escapar(banner) + '</pre>'
-      + '<pre class="arranque">' + registroDeArranque() + '\n'
-      + '$ ' + 'repositorio'.padEnd(34, '.') + ' <a href="' + UI.REPO + '">'
-      + UI.REPO.replace('https://', '') + '</a></pre>'
+      + '<pre class="banner" id="banner"></pre>'
+      + '<pre class="arranque" id="arranque"></pre>'
       + '<nav class="paginas">'
       + paginas.map(p => '<a href="' + p.archivo + '"'
         + (p.archivo === paginaActiva ? ' class="activa"' : '') + '>' + p.texto + '</a>').join('')
@@ -154,6 +226,35 @@
   UI.montarArmazon = function (paginaActiva) {
     document.body.insertAdjacentHTML('afterbegin', UI.cabecera(paginaActiva));
     document.body.insertAdjacentHTML('beforeend', UI.pie());
+    UI.ajustarCabecera();
+    let temporizador = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(temporizador);
+      temporizador = setTimeout(UI.ajustarCabecera, 150);
+    });
+  };
+
+
+  // Cuántos caracteres monoespaciados caben de ancho en un elemento. Se mide,
+  // no se estima: en un móvil de 360 px no cabe lo mismo que en un portátil,
+  // y el ASCII de ancho fijo hay que repartirlo en consecuencia.
+  UI.columnasQueCaben = function (elemento) {
+    if (!elemento) return 80;
+    const medidor = document.createElement('span');
+    medidor.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;'
+      + 'font:inherit';
+    medidor.textContent = '0'.repeat(100);
+    elemento.appendChild(medidor);
+    const anchoDe100 = medidor.getBoundingClientRect().width;
+    elemento.removeChild(medidor);
+
+    // clientWidth INCLUYE el relleno: hay que descontarlo, o el cálculo sale
+    // optimista y el dibujo se sale por unos pocos píxeles.
+    const est = getComputedStyle(elemento);
+    const relleno = parseFloat(est.paddingLeft || 0) + parseFloat(est.paddingRight || 0);
+    const disponible = elemento.clientWidth - relleno - 2;   // 2 px de margen
+    if (!anchoDe100 || disponible <= 0) return 80;
+    return Math.max(24, Math.floor(disponible / (anchoDe100 / 100)));
   };
 
   UI.pronto = function (fn) {

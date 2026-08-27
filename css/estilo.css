@@ -86,7 +86,9 @@ pre.banner {
   overflow-x: auto;
   white-space: pre;
 }
-.arranque { color: var(--texto-3); margin: 0 0 1em; font-size: .92em; }
+.arranque { color: var(--texto-3); margin: 0 0 1em; font-size: .92em;
+             overflow-x: auto; white-space: pre; }
+.arranque.compacto { white-space: pre-wrap; }
 .arranque .ok { color: var(--verde); }
 .arranque a { color: var(--cian); }
 
@@ -238,7 +240,7 @@ pre.arte-prueba {
 pre.tablero-ascii {
   /* interlineado 1: es lo que hace que los caracteres de caja se unan
      verticalmente en lugar de quedar a trozos. */
-  margin: 0 auto; font-size: clamp(15px, 3.6vw, 22px); line-height: 1;
+  margin: 0 auto; font-size: clamp(20px, 7.2vw, 26px); line-height: 1;
   white-space: pre; overflow: visible; cursor: default;
   color: var(--lima); font-weight: 700; width: max-content;
 }
@@ -350,3 +352,72 @@ footer.principal .envoltura { padding-bottom: 0; }
                       gap: .6ch; cursor: pointer; }
 .fila-botones label:hover { color: var(--texto-2); }
 .fila-botones input[type="checkbox"] { accent-color: var(--acento); margin: 0; }
+
+
+/* ==========================================================================
+   Móvil
+   --------------------------------------------------------------------------
+   Mucha gente abrirá esto en el teléfono, y el ASCII de ancho fijo es lo
+   primero que se rompe. Tres medidas:
+
+   1. El dibujo se reparte por el ancho REAL, medido en caracteres: las
+      matrices se apilan en lugar de salirse (lo hace el JavaScript).
+   2. Las casillas del tablero crecen para poder pulsarlas con el dedo.
+   3. Los volcados bajan de tamaño para que quepan más columnas, y los que
+      aun así no caben se desplazan dentro de su propio recuadro, nunca
+      arrastrando la página entera.
+   ========================================================================== */
+
+/* La página nunca se desplaza de lado: solo sus recuadros. */
+html, body { max-width: 100%; overflow-x: hidden; }
+
+@media (max-width: 720px) {
+  body { font-size: 15px; }
+  .envoltura { padding: 0 3vw 4em; }
+
+  h2 { white-space: normal; }
+  h2::after { content: none; }
+  h2 { border-bottom: 1px solid var(--linea); padding-bottom: .3em; }
+  h2 .capitulo { display: block; margin-left: 0; }
+
+  /* Volcados: más columnas visibles, y desplazamiento propio. */
+  pre.codigo, pre.volcado {
+    font-size: 11.5px; line-height: 1.45;
+    -webkit-overflow-scrolling: touch;
+  }
+  pre.volcado.matrices { font-size: 11.5px; }
+  pre.banner { font-size: 11px; }
+  pre.arranque { font-size: 11px; }
+
+  /* El tablero, con sitio para el dedo. */
+  .caja-tablero { padding: .8em .6ch; }
+  pre.tablero-ascii { font-size: clamp(24px, 8.6vw, 30px); }
+
+  /* Una sola columna en todo. */
+  .zona-juego { grid-template-columns: minmax(0, 1fr); }
+  .controles { grid-template-columns: minmax(0, 1fr); }
+  .cifras { grid-template-columns: minmax(0, 1fr); }
+  .cifra { border-right: none; border-bottom: 1px solid var(--linea); }
+  .cifra:last-child { border-bottom: none; }
+
+  nav.paginas a { margin-right: 1.5ch; font-size: .95em; }
+  .fila-botones { gap: .8em 1.5ch; }
+  button.accion { padding: .5em 1.2ch; }        /* más alto: se pulsa mejor */
+  select { padding: .5em .6ch; }
+  table { min-width: 46ch; }
+}
+
+@media (max-width: 420px) {
+  pre.codigo, pre.volcado, pre.volcado.matrices { font-size: 10.5px; }
+  pre.banner { font-size: 10.5px; }
+  pre.arranque { font-size: 10.5px; }
+  pre.tablero-ascii { font-size: clamp(26px, 9.4vw, 32px); }
+}
+
+/* En un dispositivo sin puntero, la ayuda del ratón y del teclado sobra:
+   se pulsa la casilla y ya. */
+@media (hover: none) and (pointer: coarse) {
+  .solo-con-teclado { display: none; }
+  .solo-tactil { display: inline; }
+}
+.solo-tactil { display: none; }

@@ -63,7 +63,7 @@
   }
 
   function etiquetaLibre(c) {
-    if (!P.etiquetas) return '·';
+    if (!P.etiquetas) return '.';
     return modoEtiqueta() === 'magico' ? String(PFC.MU[c]) : String(c);
   }
 
@@ -86,10 +86,15 @@
         + ' ' + contenido + ' </span>';
     };
 
-    let s = '   ┌───┬───┬───┐\n';
+    // ASCII puro: '+', '-' y '|'. Nada de caracteres de caja (┌ ─ │).
+    // Muchas fuentes monoespaciadas de móvil no los tienen, el navegador los
+    // sustituye por otra fuente con distinto ancho y el tablero se descuadra.
+    // Estos tres caracteres están en todas las fuentes del mundo.
+    const raya = '   +---+---+---+';
+    let s = raya + '\n';
     for (let f = 0; f < 3; f++) {
-      s += '   │' + [0, 1, 2].map(k => celda(f * 3 + k)).join('│') + '│\n';
-      s += '   ' + (f < 2 ? '├───┼───┼───┤' : '└───┴───┴───┘') + (f < 2 ? '\n' : '');
+      s += '   |' + [0, 1, 2].map(k => celda(f * 3 + k)).join('|') + '|\n';
+      s += raya + (f < 2 ? '\n' : '');
     }
     return s;   // sin salto final: un renglón vacío desplazaría el dibujo
   }
@@ -289,6 +294,7 @@
 
   function refrescar() {
     $('#tablero').innerHTML = dibujarTablero();
+    ajustarTablero();
 
     // Estado de la partida.
     const est = $('#estado');
@@ -349,10 +355,14 @@
       $('#regla').textContent = '—';
       $('#explicacion').textContent = 'Todavía no ha decidido nada ningún algoritmo.';
     }
-    // Las matrices de la decisión: la regla, vista como matrices.
+    // Las matrices de la decisión: la regla, vista como matrices. El ancho se
+    // mide en el propio elemento, para que en un móvil se apilen en lugar de
+    // salirse de la pantalla.
     const d = P.ultimaDecision;
+    const columnasMatrices = UI.columnasQueCaben($('#matrices'));
+    DM.fijarAncho(columnasMatrices);
     $('#matrices').textContent = d
-      ? DM.matrices(d.alg, d.propias, d.ajenas, d.decision)
+      ? DM.matrices(d.alg, d.propias, d.ajenas, d.decision, columnasMatrices)
       : 'Las matrices de la decisión aparecen en cuanto decida un algoritmo.';
 
     $('#candidatas').textContent = P.candidatas.length
@@ -390,10 +400,12 @@
     const suMarca = algoritmoDe(marca) ? marca : (marca === 'X' ? 'O' : 'X');
     $('#dentro-quien').textContent = alg.nombre + '  ·  ' + alg.capitulo
       + '  ·  desde el punto de vista de ' + suMarca;
+    const columnas = UI.columnasQueCaben($('#dentro'));
+    DM.fijarAncho(columnas);
     $('#dentro').textContent = DM.pintar(
       alg, propiasDe(suMarca).slice(), ajenasDe(suMarca).slice(),
-      suMarca, suMarca === 'X' ? 'O' : 'X');
-    $('#traza').textContent = DM.traza(alg, P.historial, suMarca);
+      suMarca, suMarca === 'X' ? 'O' : 'X', columnas);
+    $('#traza').textContent = DM.traza(alg, P.historial, suMarca, columnas);
   }
 
   // El código que acaba de decidir. No es una copia: es el texto de las
@@ -418,16 +430,45 @@
    * Así ocupa el 100 % del ancho en cualquier pantalla.
    */
 
+  // El tablero, ajustado al ancho disponible igual que el título. Así no
+  // depende de adivinar un tamaño con vw: se mide y se despeja. En un móvil
+  // estrecho encoge lo justo, y nunca se sale.
+  function ajustarTablero() {
+    const pre = document.getElementById('tablero');
+    if (!pre) return;
+    const caja = pre.parentElement;
+    const columnas = 16;                       // '   +---+---+---+'
+    const medidor = document.createElement('span');
+    medidor.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;'
+      + 'font-family:inherit;font-weight:inherit;font-size:100px';
+    medidor.textContent = '0'.repeat(columnas);
+    caja.appendChild(medidor);
+    const anchoACien = medidor.getBoundingClientRect().width;
+    caja.removeChild(medidor);
+
+    const disponible = caja.clientWidth - 4;
+    if (!anchoACien || !disponible) return;
+    const cabe = 100 * disponible / anchoACien;
+    pre.style.fontSize = Math.max(13, Math.min(34, cabe)).toFixed(2) + 'px';
+  }
+
   function ajustarArte() {
     const pre = document.getElementById('arte-prueba');
     if (!pre) return;
-    const columnas = UI.ARTE_PRUEBA.split('\n')
+
+    // En una pantalla estrecha, el dibujo de dos renglones saldría diminuto.
+    // Se usa la variante de tres renglones, que es menos ancha y por tanto
+    // sale al triple de tamaño.
+    const arte = pre.clientWidth < 620 ? UI.ARTE_PRUEBA_ESTRECHO : UI.ARTE_PRUEBA;
+    if (pre.textContent !== arte) pre.textContent = arte;
+
+    const columnas = arte.split('\n')
       .reduce((m, l) => Math.max(m, l.length), 0);
 
     const medidor = document.createElement('span');
     medidor.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;'
       + 'font-family:inherit;font-weight:inherit;font-size:100px';
-    medidor.textContent = '\u2588'.repeat(columnas);
+    medidor.textContent = '#'.repeat(columnas);   // el mismo carácter del dibujo
     pre.appendChild(medidor);
     const anchoACien = medidor.getBoundingClientRect().width;
     pre.removeChild(medidor);
@@ -450,12 +491,14 @@
 
   global.arrancarJuego = function () {
     UI.montarArmazon('index.html');
-    $('#arte-prueba').textContent = UI.ARTE_PRUEBA;
     ajustarArte();
+    ajustarTablero();
     let temporizador = null;
     global.addEventListener('resize', function () {
       clearTimeout(temporizador);
-      temporizador = setTimeout(ajustarArte, 120);
+      temporizador = setTimeout(function () {
+        ajustarArte(); ajustarTablero(); refrescar();
+      }, 150);
     });
 
     $('#jugador-a').innerHTML = opcionesDeJugador('humano');
