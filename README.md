@@ -181,15 +181,29 @@ js/ui-recuento.js            la página 3
 Todos los archivos son JavaScript clásico —sin módulos, sin `import`— a propósito: así la página
 funciona igual servida por GitHub Pages y abierta directamente desde el disco con doble clic.
 
-### Por qué todo el dibujo es ASCII puro
+### Por qué el dibujo no confía en la fuente
 
-Los tableros, las matrices y los marcos se dibujan con `+`, `-` y `|`, y el título con `#`. No con
-los caracteres de caja de Unicode (`┌ ─ │ █`), que es lo que uno usaría por estética.
+Dibujar rejillas con texto se apoya en una promesa que no siempre se cumple: que todos los
+caracteres midan lo mismo. Probándolo en un teléfono real se rompió por tres vías a la vez —un
+carácter de caja Unicode que la fuente no tiene y sustituye por otro de distinto ancho, una negrita
+con distinto avance, y un tamaño de letra adivinado con `vw`—. El tablero dejaba de ser una
+rejilla.
 
-La razón es concreta y se descubrió probándolo en un móvil: **muchas fuentes monoespaciadas de
-teléfono no tienen esos caracteres**. El navegador los sustituye por otra fuente con distinto ancho
-de avance, y todo el dibujo se parte — el tablero deja de ser una rejilla. `+`, `-`, `|` y `#`
-están en todas las fuentes que existen, y por eso el dibujo se sostiene en cualquier pantalla.
+La solución no es elegir mejor la fuente, es **no depender de ella**. Tres medidas:
+
+1. **Solo ASCII de 7 bits.** El dibujo usa `+`, `-` y `|`. Nada de `┌ ─ │ █`.
+2. **Una columna exacta por carácter.** Cada carácter va dentro de un `<i>` de `width: 1ch`,
+   centrado. El tablero se cuenta por caracteres y cada carácter ocupa una columna, punto: la
+   rejilla la garantiza la maquetación, no las métricas de la fuente.
+3. **El mismo peso en todas las celdas.** Solo cambia el color, nunca la negrita.
+
+Está comprobado por el camino difícil: forzando `Georgia` —una fuente **proporcional**— y una
+negrita 900 en unas celdas y no en otras, las dieciséis columnas del tablero y las sesenta y una de
+las matrices siguen cayendo en la misma posición, con **cero desviaciones**. Si aguanta eso, aguanta
+cualquier fuente de cualquier teléfono.
+
+El título es texto normal, no arte de caracteres, por la misma razón: el arte compuesto depende de
+que la fuente tenga el glifo exacto y de que todos midan igual. Un título de texto no puede fallar.
 
 ### Cómo se adapta al ancho
 

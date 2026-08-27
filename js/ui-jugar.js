@@ -82,18 +82,23 @@
       if (enRectaGanadora(c)) clases.push('ganadora');
       else if (c === P.cursor && !P.terminada && esHumano(P.turno) && !esX && !esO) clases.push('cursor');
       else if (P.candidatas.includes(c) && !esX && !esO) clases.push('candidata');
+      // Tres columnas exactas: espacio, glifo, espacio.
       return '<span class="' + clases.join(' ') + '" data-casilla="' + c + '">'
-        + ' ' + contenido + ' </span>';
+        + UI.enColumnas(' ' + contenido + ' ') + '</span>';
     };
 
-    // ASCII puro: '+', '-' y '|'. Nada de caracteres de caja (┌ ─ │).
-    // Muchas fuentes monoespaciadas de móvil no los tienen, el navegador los
-    // sustituye por otra fuente con distinto ancho y el tablero se descuadra.
-    // Estos tres caracteres están en todas las fuentes del mundo.
-    const raya = '   +---+---+---+';
+    // El tablero se construye contando caracteres, y cada carácter va en su
+    // propia caja de ancho fijo (una columna exacta). Así la rejilla la
+    // garantiza la maquetación y no las métricas de la fuente: da igual que
+    // el móvil sustituya un glifo o que la negrita tenga otro avance.
+    //
+    // Y solo se usan '+', '-' y '|', que están en todas las fuentes.
+    const raya = UI.enColumnas('   +---+---+---+');
     let s = raya + '\n';
     for (let f = 0; f < 3; f++) {
-      s += '   |' + [0, 1, 2].map(k => celda(f * 3 + k)).join('|') + '|\n';
+      s += UI.enColumnas('   ') + UI.enColumnas('|')
+        + [0, 1, 2].map(k => celda(f * 3 + k)).join(UI.enColumnas('|'))
+        + UI.enColumnas('|') + '\n';
       s += raya + (f < 2 ? '\n' : '');
     }
     return s;   // sin salto final: un renglón vacío desplazaría el dibujo
@@ -361,9 +366,9 @@
     const d = P.ultimaDecision;
     const columnasMatrices = UI.columnasQueCaben($('#matrices'));
     DM.fijarAncho(columnasMatrices);
-    $('#matrices').textContent = d
+    UI.pintarPorColumnas($('#matrices'), d
       ? DM.matrices(d.alg, d.propias, d.ajenas, d.decision, columnasMatrices)
-      : 'Las matrices de la decisión aparecen en cuanto decida un algoritmo.';
+      : 'Las matrices de la decisión aparecen en cuanto decida un algoritmo.');
 
     $('#candidatas').textContent = P.candidatas.length
       ? 'Jugadas que considera igual de buenas: ' + P.candidatas.join(', ')
@@ -391,9 +396,9 @@
     let alg = algoritmoDe(marca);
     if (!alg) alg = algoritmoDe(marca === 'X' ? 'O' : 'X');
     if (!alg) {
-      $('#dentro').textContent = 'Los dos jugadores son humanos: no hay ninguna máquina en la '
-        + 'que mirar. Elige un algoritmo arriba.';
-      $('#traza').textContent = '';
+      UI.pintarPorColumnas($('#dentro'), 'Los dos jugadores son humanos: no hay ninguna '
+        + 'máquina en la que mirar. Elige un algoritmo arriba.');
+      UI.pintarPorColumnas($('#traza'), '');
       $('#dentro-quien').textContent = '';
       return;
     }
@@ -402,10 +407,10 @@
       + '  ·  desde el punto de vista de ' + suMarca;
     const columnas = UI.columnasQueCaben($('#dentro'));
     DM.fijarAncho(columnas);
-    $('#dentro').textContent = DM.pintar(
+    UI.pintarPorColumnas($('#dentro'), DM.pintar(
       alg, propiasDe(suMarca).slice(), ajenasDe(suMarca).slice(),
-      suMarca, suMarca === 'X' ? 'O' : 'X', columnas);
-    $('#traza').textContent = DM.traza(alg, P.historial, suMarca, columnas);
+      suMarca, suMarca === 'X' ? 'O' : 'X', columnas));
+    UI.pintarPorColumnas($('#traza'), DM.traza(alg, P.historial, suMarca, columnas));
   }
 
   // El código que acaba de decidir. No es una copia: es el texto de las
@@ -452,32 +457,6 @@
     pre.style.fontSize = Math.max(13, Math.min(34, cabe)).toFixed(2) + 'px';
   }
 
-  function ajustarArte() {
-    const pre = document.getElementById('arte-prueba');
-    if (!pre) return;
-
-    // En una pantalla estrecha, el dibujo de dos renglones saldría diminuto.
-    // Se usa la variante de tres renglones, que es menos ancha y por tanto
-    // sale al triple de tamaño.
-    const arte = pre.clientWidth < 620 ? UI.ARTE_PRUEBA_ESTRECHO : UI.ARTE_PRUEBA;
-    if (pre.textContent !== arte) pre.textContent = arte;
-
-    const columnas = arte.split('\n')
-      .reduce((m, l) => Math.max(m, l.length), 0);
-
-    const medidor = document.createElement('span');
-    medidor.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;'
-      + 'font-family:inherit;font-weight:inherit;font-size:100px';
-    medidor.textContent = '#'.repeat(columnas);   // el mismo carácter del dibujo
-    pre.appendChild(medidor);
-    const anchoACien = medidor.getBoundingClientRect().width;
-    pre.removeChild(medidor);
-
-    const disponible = pre.clientWidth;
-    if (!anchoACien || !disponible) return;
-    pre.style.fontSize = Math.max(3, (100 * disponible / anchoACien) - 0.15).toFixed(2) + 'px';
-  }
-
   /* ==================================================================
    * Arranque
    * ================================================================== */
@@ -491,14 +470,11 @@
 
   global.arrancarJuego = function () {
     UI.montarArmazon('index.html');
-    ajustarArte();
     ajustarTablero();
     let temporizador = null;
     global.addEventListener('resize', function () {
       clearTimeout(temporizador);
-      temporizador = setTimeout(function () {
-        ajustarArte(); ajustarTablero(); refrescar();
-      }, 150);
+      temporizador = setTimeout(function () { ajustarTablero(); refrescar(); }, 150);
     });
 
     $('#jugador-a').innerHTML = opcionesDeJugador('humano');

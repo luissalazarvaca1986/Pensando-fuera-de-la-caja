@@ -226,12 +226,15 @@ button.accion:disabled { opacity: .45; cursor: default; }
 
 /* El tablero es lo que hay que probar: se destaca. Rejilla en lima,
    fichas en naranja. */
-/* El arte ASCII se escala por JS para ocupar exactamente el ancho
-   disponible, a todo lo ancho de la página y no solo de su columna. */
-pre.arte-prueba {
-  margin: .6em 0 .3em; color: var(--lima); font-weight: 700;
-  line-height: 1; white-space: pre; overflow: hidden;
-  font-size: 10px;   /* provisional: lo recalcula ui-jugar.js */
+/* Un título en texto normal, no en arte ASCII compuesto.
+   El arte de caracteres depende de que la fuente tenga el glifo exacto y de
+   que todos los glifos midan lo mismo; en un móvil eso no se cumple y las
+   letras se parten. Un título de texto no puede fallar en ninguna pantalla. */
+.titulo-prueba {
+  color: var(--lima); font-weight: 700;
+  font-size: clamp(1.4rem, 5.4vw, 2.1rem);
+  line-height: 1.2; letter-spacing: .06em;
+  margin: 1em 0 .35em;
 }
 .lema-prueba { color: var(--naranja); margin: 0 0 1.2em; max-width: 88ch; }
 
@@ -248,13 +251,23 @@ pre.tablero-ascii {
 }
 pre.tablero-ascii .celda { cursor: pointer; }
 pre.tablero-ascii .celda.ocupada { cursor: default; }
-pre.tablero-ascii .marca-X { color: var(--naranja); font-weight: 700; }
-pre.tablero-ascii .marca-O { color: var(--naranja-2); font-weight: 700; }
-pre.tablero-ascii .libre   { color: var(--texto-3); font-weight: 400; }
+/* Todas las celdas con el MISMO peso. En varias fuentes monoespaciadas la
+   negrita no tiene el mismo ancho de avance que la redonda, y mezclar pesos
+   dentro de la rejilla la descuadra. Aquí solo cambia el color. */
+pre.tablero-ascii .celda,
+pre.tablero-ascii .marca-X,
+pre.tablero-ascii .marca-O,
+pre.tablero-ascii .libre,
+pre.tablero-ascii .candidata,
+pre.tablero-ascii .ganadora,
+pre.tablero-ascii .cursor { font-weight: inherit; }
+pre.tablero-ascii .marca-X { color: var(--naranja); }
+pre.tablero-ascii .marca-O { color: var(--naranja-2); }
+pre.tablero-ascii .libre   { color: var(--texto-3); }
 pre.tablero-ascii .cursor  { background: var(--lima); color: var(--fondo); }
 pre.tablero-ascii .cursor.marca-X, pre.tablero-ascii .cursor.marca-O { color: var(--fondo); }
-pre.tablero-ascii .ganadora { background: var(--naranja); color: var(--fondo); font-weight: 700; }
-pre.tablero-ascii .candidata { color: var(--lima); font-weight: 700; }
+pre.tablero-ascii .ganadora { background: var(--naranja); color: var(--fondo); }
+pre.tablero-ascii .candidata { color: var(--lima); }
 .leyenda-fichas { color: var(--texto-3); font-size: .92em; margin: .7em 0 0; text-align: center; }
 .leyenda-fichas .fx { color: var(--naranja); font-weight: 700; }
 .leyenda-fichas .fo { color: var(--naranja-2); font-weight: 700; }
@@ -423,3 +436,35 @@ html, body { max-width: 100%; overflow-x: hidden; }
   .solo-tactil { display: inline; }
 }
 .solo-tactil { display: none; }
+
+
+/* ==========================================================================
+   Dibujo por columnas
+   --------------------------------------------------------------------------
+   Cada carácter de un dibujo va dentro de un <i> de una columna exacta.
+   No se confía en que la fuente sea de ancho fijo: se impone.
+
+   1ch es el avance del carácter «0» en la fuente en uso. Todas las cajas
+   miden eso, así que todas miden lo mismo — aunque el glifo que caiga dentro
+   sea más ancho o más estrecho, y aunque el navegador lo haya sustituido.
+   ========================================================================== */
+
+pre.tablero-ascii i,
+.en-columnas i {
+  display: inline-block;
+  width: 1ch;
+  text-align: center;
+  font-style: normal;      /* <i> es cursiva por omisión */
+  font-weight: inherit;
+  letter-spacing: 0;
+  overflow: hidden;        /* un glifo más ancho no empuja a su vecino */
+}
+
+/* El texto de un dibujo no debe reajustarse solo: Android infla el tamaño de
+   letra por bloques y eso descolocaría unas rejillas respecto a otras. */
+pre.tablero-ascii, .en-columnas {
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+  font-variant-ligatures: none;
+  font-kerning: none;
+}

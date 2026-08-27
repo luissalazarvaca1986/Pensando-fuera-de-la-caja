@@ -41,44 +41,41 @@
     return out.join('\n');
   };
 
-  // Título en arte ASCII, dibujado con '#'. Nada de U+2588 (█): muchas
-  // fuentes monoespaciadas de móvil no lo tienen, el navegador lo sustituye
-  // por otra fuente con distinto ancho y las letras salen partidas.
-  UI.ARTE_PRUEBA = [
-    '#### #### #  # #    ####      ####      #### #### #  # #### ###  ####',
-    '#  # #  # ## # #    #  #      #  #      #  # #  # #  # #    #  # #  #',
-    '#### #  # # ## #    #  #      ####      #### #### #  # ###  ###  ####',
-    '#    #  # #  # #    #  #      #  #      #    # #  #  # #    #  # #  #',
-    '#    #### #  # #### ####      #  #      #    #  # #### #### ###  #  #',
-    '',
-    '#### #  #      #  #  ##  #### #  # ####',
-    ' ##  #  #      ####  ##  #    #### #  #',
-    ' ##  #  #      ####  ##  #### #### #  #',
-    ' ##  #  #      #  #  ##     # #  # #  #',
-    ' ##  ####      #  #  ##  #### #  # ####',
-  ].join('\n');
 
-  // Variante de tres renglones para pantallas estrechas: menos ancha, y por
-  // tanto sale al triple de tamaño en un móvil.
-  UI.ARTE_PRUEBA_ESTRECHO = [
-    '#### #### #  # #    ####',
-    '#  # #  # ## # #    #  #',
-    '#### #  # # ## #    #  #',
-    '#    #  # #  # #    #  #',
-    '#    #### #  # #### ####',
-    '',
-    '####      #### #### #  # #### ###  ####',
-    '#  #      #  # #  # #  # #    #  # #  #',
-    '####      #### #### #  # ###  ###  ####',
-    '#  #      #    # #  #  # #    #  # #  #',
-    '#  #      #    #  # #### #### ###  #  #',
-    '',
-    '#### #  #      #  #  ##  #### #  # ####',
-    ' ##  #  #      ####  ##  #    #### #  #',
-    ' ##  #  #      ####  ##  #### #### #  #',
-    ' ##  #  #      #  #  ##     # #  # #  #',
-    ' ##  ####      #  #  ##  #### #  # ####',
-  ].join('\n');
+  /* ---------- Dibujar contando columnas, no confiando en la fuente ----------
+   *
+   * El problema de dibujar rejillas con texto es que se apoya en una promesa
+   * que no siempre se cumple: que todos los caracteres midan lo mismo. En un
+   * móvil se rompe por dos vías —un glifo que la fuente no tiene y sustituye
+   * por otro de distinto ancho, o una negrita con distinto avance— y la
+   * rejilla se parte.
+   *
+   * Aquí no se confía. Cada carácter va dentro de su propia caja de UNA
+   * columna exacta, centrado. El tablero se cuenta por caracteres y cada
+   * carácter ocupa una columna, punto. Con eso la rejilla la garantiza la
+   * maquetación, y da igual qué fuente acabe usando el navegador.
+   */
+
+  // Convierte un texto en una fila de columnas exactas.
+  UI.enColumnas = function (texto) {
+    let salida = '';
+    for (const caracter of String(texto)) {
+      salida += '<i>' + UI.escapar(caracter) + '</i>';
+    }
+    return salida;
+  };
+
+  // Pinta un texto entero —varios renglones— por columnas. Se salta el
+  // trabajo si el texto no ha cambiado: en una partida se repinta a cada
+  // jugada y esto se ejecuta muchas veces.
+  UI.pintarPorColumnas = function (elemento, texto) {
+    if (!elemento) return;
+    if (elemento.dataset.texto === texto) return;
+    elemento.dataset.texto = texto;
+    elemento.classList.add('en-columnas');
+    elemento.innerHTML = String(texto).split('\n')
+      .map(UI.enColumnas).join('\n');
+  };
 
   /* ---------- Resaltado de código, minúsculo y suficiente ---------- */
 
